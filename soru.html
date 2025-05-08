@@ -1,0 +1,191 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Psikolojik Test</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #dbeafe, #f0fdf4);
+    }
+    header {
+      background-color: #2563eb;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 1.8em;
+      font-weight: bold;
+    }
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
+      background: #fff;
+      border-radius: 15px;
+      padding: 40px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .question {
+      margin-bottom: 25px;
+      padding: 20px;
+      background: #f9fafb;
+      border-radius: 10px;
+      border-left: 5px solid #2563eb;
+    }
+    .question label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 12px;
+      font-size: 1.1em;
+    }
+    .options label {
+      display: inline-block;
+      margin: 5px 10px 0 0;
+      background: #eff6ff;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .options input[type="radio"] {
+      margin-right: 6px;
+    }
+    .options label:hover {
+      background-color: #dbeafe;
+    }
+    button {
+      display: block;
+      margin: 40px auto 0;
+      padding: 14px 36px;
+      background-color: #10b981;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #059669;
+    }
+    #result {
+      margin-top: 40px;
+      padding: 20px;
+      border-radius: 12px;
+      font-size: 1.1em;
+      text-align: center;
+      font-weight: 500;
+    }
+    #result.green { background: #dcfce7; border-left: 6px solid #22c55e; }
+    #result.yellow { background: #fef9c3; border-left: 6px solid #eab308; }
+    #result.red { background: #fee2e2; border-left: 6px solid #ef4444; }
+    canvas { margin-top: 40px; }
+  </style>
+</head>
+<body>
+  <header>🧠 Psikolojik Farkındalık Testi</header>
+
+  <div class="container">
+    <form id="testForm">
+      <!-- Sorular burada dinamik olarak eklenecek -->
+    </form>
+
+    <button onclick="evaluateTest()">Testi Bitir ve Sonucu Gör</button>
+
+    <div id="result" style="display: none;"></div>
+    <canvas id="resultChart"></canvas>
+  </div>
+
+  <script>
+    const questions = [
+      "Sabahları enerjik kalkıyorum.",
+      "Gün içinde odaklanma sorunu yaşıyorum.",
+      "Son zamanlarda stresli hissediyorum.",
+      "Duygularımı açıkça ifade edebiliyorum.",
+      "Uyandıktan sonra bir süre mutsuz hissediyorum.",
+      "Gün içinde sık sık moralim düşüyor.",
+      "Kendimi zihinsel olarak yorgun hissediyorum.",
+      "Hobilerime ayırdığım vakitten memnunum.",
+      "Günlük rutinim beni tatmin ediyor.",
+      "Kendimle gurur duyuyorum."
+    ];
+
+    window.onload = () => {
+      const form = document.getElementById('testForm');
+      questions.forEach((q, i) => {
+        const div = document.createElement('div');
+        div.className = 'question';
+        div.innerHTML = `
+          <label>${i + 1}. ${q}</label>
+          <div class="options">
+            <label><input type="radio" name="q${i+1}" value="1">1</label>
+            <label><input type="radio" name="q${i+1}" value="2">2</label>
+            <label><input type="radio" name="q${i+1}" value="3">3</label>
+            <label><input type="radio" name="q${i+1}" value="4">4</label>
+            <label><input type="radio" name="q${i+1}" value="5">5</label>
+          </div>
+        `;
+        form.appendChild(div);
+      });
+    }
+
+    function evaluateTest() {
+      let total = 0, answered = 0;
+      for (let i = 1; i <= 10; i++) {
+        const options = document.getElementsByName('q' + i);
+        for (const opt of options) {
+          if (opt.checked) {
+            total += parseInt(opt.value);
+            answered++;
+          }
+        }
+      }
+
+      if (answered < 10) {
+        alert('Lütfen tüm soruları cevaplayınız.');
+        return;
+      }
+
+      const resultDiv = document.getElementById('result');
+      let resultText = '', cssClass = '';
+
+      if (total >= 40) {
+        resultText = '🟢 Zihin Durağan: Dengelisin. Günlük alışkanlıklarına devam et!';
+        cssClass = 'green';
+      } else if (total >= 25) {
+        resultText = '🟡 Zihin Dalgalı: İnişli çıkışlısın. Dinlenmeye ve dengeye odaklan.';
+        cssClass = 'yellow';
+      } else {
+        resultText = '🔴 Zihin Bulanık: Stresli ve yorgun görünüyorsun. Dinlenmeye ihtiyaç var.';
+        cssClass = 'red';
+      }
+
+      resultDiv.textContent = resultText;
+      resultDiv.className = '';
+      resultDiv.classList.add(cssClass);
+      resultDiv.style.display = 'block';
+
+      new Chart(document.getElementById('resultChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: ['Toplam Puan', 'Denge', 'Stres/Yorgunluk'],
+          datasets: [{
+            data: [total, total >= 40 ? total : 0, total < 25 ? total : 0],
+            backgroundColor: ['#3b82f6', '#10b981', '#f87171']
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, max: 50 } }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
