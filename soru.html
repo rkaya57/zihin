@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -36,6 +35,13 @@
       background: #f9fafb;
       border-radius: 10px;
       border-left: 5px solid #2563eb;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.5s ease-in-out;
+    }
+    .question.visible {
+      opacity: 1;
+      transform: translateY(0);
     }
     .question label {
       display: block;
@@ -100,20 +106,30 @@
 
     <div id="result" style="display: none;"></div>
     <canvas id="resultChart"></canvas>
+    <canvas id="progressChart"></canvas>
+    <div style="text-align: center; margin-top: 30px;">
+      <button onclick="claimReward()">🎁 MNTK Ödülünü Al</button>
+      <p id="walletStatus"></p>
+    </div>
   </div>
 
   <script>
     const questions = [
-      "Sabahları enerjik kalkıyorum.",
-      "Gün içinde odaklanma sorunu yaşıyorum.",
-      "Son zamanlarda stresli hissediyorum.",
-      "Duygularımı açıkça ifade edebiliyorum.",
-      "Uyandıktan sonra bir süre mutsuz hissediyorum.",
-      "Gün içinde sık sık moralim düşüyor.",
-      "Kendimi zihinsel olarak yorgun hissediyorum.",
-      "Hobilerime ayırdığım vakitten memnunum.",
-      "Günlük rutinim beni tatmin ediyor.",
-      "Kendimle gurur duyuyorum."
+      "Sabahları güne pozitif başlamakta zorlanırım.",
+      "Gün boyunca yaptığım işleri unutma eğilimindeyim.",
+      "Anda kalmakta güçlük çekiyorum.",
+      "Zihnimi boşaltmakta zorlanıyorum.",
+      "Stresli durumlarda genellikle paniklerim.",
+      "Kendimle ilgili olumsuz düşünceler zihnimi sıkça meşgul eder.",
+      "Zihinsel olarak tükendiğimi hissediyorum.",
+      "Kendime zihinsel mola vermek için zaman ayırırım.",
+      "Gece yattığımda düşünceler zihnimi susturmaz.",
+      "Duygularımı yönetirken zihinsel kontrolüm yüksektir.",
+      "Uzun süre bir işe odaklanmakta zorlanıyorum.",
+      "Zihinsel dağınıklık verimliliğimi azaltıyor.",
+      "Düşüncelerim sık sık geçmişteki olaylara kayıyor.",
+      "Zihinsel sağlığıma düzenli olarak dikkat ediyorum.",
+      "Kendimi zihinsel olarak güçlü ve dirençli hissediyorum."
     ];
 
     window.onload = () => {
@@ -133,11 +149,16 @@
         `;
         form.appendChild(div);
       });
+
+      const all = document.querySelectorAll('.question');
+      all.forEach((el, i) => {
+        setTimeout(() => el.classList.add('visible'), i * 100);
+      });
     }
 
     function evaluateTest() {
       let total = 0, answered = 0;
-      for (let i = 1; i <= 10; i++) {
+      for (let i = 1; i <= 15; i++) {
         const options = document.getElementsByName('q' + i);
         for (const opt of options) {
           if (opt.checked) {
@@ -147,7 +168,7 @@
         }
       }
 
-      if (answered < 10) {
+      if (answered < 15) {
         alert('Lütfen tüm soruları cevaplayınız.');
         return;
       }
@@ -155,10 +176,10 @@
       const resultDiv = document.getElementById('result');
       let resultText = '', cssClass = '';
 
-      if (total >= 40) {
+      if (total >= 55) {
         resultText = '🟢 Zihin Durağan: Dengelisin. Günlük alışkanlıklarına devam et!';
         cssClass = 'green';
-      } else if (total >= 25) {
+      } else if (total >= 35) {
         resultText = '🟡 Zihin Dalgalı: İnişli çıkışlısın. Dinlenmeye ve dengeye odaklan.';
         cssClass = 'yellow';
       } else {
@@ -167,25 +188,63 @@
       }
 
       resultDiv.textContent = resultText;
-      resultDiv.className = '';
-      resultDiv.classList.add(cssClass);
+      resultDiv.className = cssClass;
       resultDiv.style.display = 'block';
 
-      new Chart(document.getElementById('resultChart').getContext('2d'), {
+      let scores = JSON.parse(localStorage.getItem("zihinSkorlari") || "[]");
+      scores.push(total);
+      localStorage.setItem("zihinSkorlari", JSON.stringify(scores));
+
+      const ctx = document.getElementById('resultChart').getContext('2d');
+      new Chart(ctx, {
         type: 'bar',
         data: {
           labels: ['Toplam Puan', 'Denge', 'Stres/Yorgunluk'],
           datasets: [{
-            data: [total, total >= 40 ? total : 0, total < 25 ? total : 0],
+            data: [total, total >= 55 ? total : 0, total < 35 ? total : 0],
             backgroundColor: ['#3b82f6', '#10b981', '#f87171']
           }]
         },
         options: {
           plugins: { legend: { display: false } },
-          scales: { y: { beginAtZero: true, max: 50 } }
+          scales: { y: { beginAtZero: true, max: 75 } }
         }
       });
+
+      const ctx2 = document.getElementById('progressChart').getContext('2d');
+      new Chart(ctx2, {
+        type: 'line',
+        data: {
+          labels: scores.map((_, i) => `Test ${i+1}`),
+          datasets: [{
+            label: 'Zihin Gelişimi',
+            data: scores,
+            fill: false,
+            borderColor: '#2563eb',
+            tension: 0.1
+          }]
+        }
+      });
+    }
+
+    async function claimReward() {
+      if (!window.keplr) {
+        alert("Keplr yüklü değil"); return;
+      }
+      const chainId = "phoenix-1"; // veya rebel-2
+      await window.keplr.enable(chainId);
+      const offlineSigner = window.getOfflineSigner(chainId);
+      const accounts = await offlineSigner.getAccounts();
+      const address = accounts[0].address;
+      document.getElementById("walletStatus").innerText = "🔗 Bağlandı: " + address;
+
+      try {
+        alert("🪙 MNTK ödül işlemi gönderildi! (Simülasyon)");
+      } catch (e) {
+        alert("Hata: Ödül alınamadı." + e);
+      }
     }
   </script>
 </body>
 </html>
+
