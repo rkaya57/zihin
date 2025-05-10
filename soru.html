@@ -104,6 +104,20 @@
 
     <button onclick="evaluateTest()">Testi Bitir ve Sonucu Gör</button>
 
+    <div id="walletDisplay" style="
+    position: fixed;
+    top: 10px;
+    right: 20px;
+    background: #2563eb;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 0.9em;
+    font-weight: 600;
+    z-index: 1000;
+    display: none;
+  "></div>
+
     <div id="result" style="display: none;"></div>
     <canvas id="resultChart"></canvas>
     <canvas id="progressChart"></canvas>
@@ -244,7 +258,24 @@
         alert("Hata: Ödül alınamadı." + e);
       }
     }
+    window.addEventListener('load', async () => {
+  if (window.keplr) {
+    const chainId = "phoenix-1"; // testnet için "rebel-2"
+    try {
+      await window.keplr.enable(chainId);
+      const offlineSigner = window.getOfflineSigner(chainId);
+      const accounts = await offlineSigner.getAccounts();
+      const address = accounts[0].address;
+      
+      // cüzdan adresini ekrana yaz
+      const displayBox = document.getElementById("walletDisplay");
+      displayBox.textContent = "🔗 " + address;
+      displayBox.style.display = "block";
+    } catch (err) {
+      console.log("Keplr cüzdan bağlantısı başarısız:", err);
+    }
+  }
+});
   </script>
 </body>
 </html>
-
